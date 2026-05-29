@@ -1,12 +1,12 @@
 const CURRENT_YEAR = 2024;
-const NEXT_PATHWAY_YEAR = 2025;
 const SCOPE12_2030_TARGET = 4.51;
+const SCOPE3_2022_BASELINE = 871.47;
 const SCOPE3_2030_PLANNING_TARGET = 505.45;
 
 const data = {
   scope1: { 2019: 1.09, 2020: 7.25, 2021: 4.79, 2022: 6.05, 2023: 4.84, 2024: 3.68 },
   scope2: { 2019: 1.56, 2020: 2.32, 2021: 2.54, 2022: 1.75, 2023: 1.77, 2024: 1.65 },
-  scope12Totals: { 2019: 2.65, 2020: 9.57, 2021: 7.33, 2022: 7.80, 2023: 6.61, 2024: 5.33, 2025: 0.59 },
+  scope12Totals: { 2019: 2.65, 2020: 9.57, 2021: 7.33, 2022: 7.80, 2023: 6.61, 2024: 5.33 },
   scope12Pathway: { 2022: 6.95, 2023: 6.58, 2024: 6.24, 2025: 5.91, 2026: 5.60, 2027: 5.30, 2028: 5.03, 2029: 4.76, 2030: 4.51 },
   scope3Categories: {
     "Manufacturing and Processing": { 2019: 0, 2020: 0, 2021: 0, 2022: 278.13, 2023: 302.80, 2024: 458.13 },
@@ -32,7 +32,10 @@ const productionLinkedCategories = [
   "Raw Materials Procurement",
   "Packaging",
   "Shipment and Distribution",
-  "End of Life Waste Management"
+  "End of Life Waste Management",
+  "Transportation to the UK, Road",
+  "Transportation to the UK, Rail",
+  "Transportation to the UK, Ship"
 ];
 
 const logisticsCategories = [
@@ -42,11 +45,92 @@ const logisticsCategories = [
   "Shipment and Distribution"
 ];
 
-const chartPalette = [
-  "#123c69", "#1b8a5a", "#1f6f9f", "#58b368", "#7c3aed", "#c77d00",
-  "#0f766e", "#2563eb", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#a855f7"
+const reductionGroups = [
+  {
+    key: "manufacturing",
+    title: "Manufacturing and Processing",
+    baseline: 458.13,
+    cap: 80,
+    categories: ["Manufacturing and Processing"],
+    levers: [
+      { id: "manufacturingEnergyEfficiency", label: "Factory energy efficiency improvement", max: 40 },
+      { id: "manufacturingRenewables", label: "Supplier renewable electricity transition", max: 40 },
+      { id: "manufacturingProcessOptimisation", label: "Process optimisation and waste reduction", max: 30 },
+      { id: "manufacturingTechnology", label: "Lower impact production technology", max: 30 }
+    ]
+  },
+  {
+    key: "rawMaterials",
+    title: "Raw Materials Procurement",
+    baseline: 402.25,
+    cap: 75,
+    categories: ["Raw Materials Procurement"],
+    levers: [
+      { id: "rawMaterialSubstitution", label: "Lower impact raw material substitution", max: 40 },
+      { id: "rawSupplierReduction", label: "Supplier emissions reduction", max: 40 },
+      { id: "rawCertifiedContent", label: "Recycled or certified material content", max: 35 },
+      { id: "rawMaterialEfficiency", label: "Material efficiency per product", max: 30 }
+    ]
+  },
+  {
+    key: "packaging",
+    title: "Packaging",
+    baseline: 221.98,
+    cap: 80,
+    categories: ["Packaging"],
+    levers: [
+      { id: "packagingWeightReduction", label: "Cardboard weight reduction", max: 35 },
+      { id: "packagingRecycledContent", label: "Recycled cardboard content", max: 40 },
+      { id: "packagingSizeOptimisation", label: "Packaging size optimisation", max: 30 },
+      { id: "packagingSecondaryRemoval", label: "Removal of unnecessary secondary packaging", max: 25 },
+      { id: "packagingSupplierImprovement", label: "Supplier packaging process improvement", max: 30 }
+    ]
+  },
+  {
+    key: "logistics",
+    title: "Logistics",
+    baseline: 146.71,
+    cap: 70,
+    categories: logisticsCategories,
+    levers: [
+      { id: "logisticsRouteOptimisation", label: "Route optimisation", max: 25 },
+      { id: "logisticsLoadConsolidation", label: "Load consolidation", max: 25 },
+      { id: "logisticsModalShift", label: "Shift from road to lower emission transport", max: 35 },
+      { id: "logisticsDeliveryPartners", label: "Lower emission delivery partners", max: 40 },
+      { id: "logisticsRegionalDistribution", label: "Regional distribution optimisation", max: 25 }
+    ]
+  },
+  {
+    key: "endOfLife",
+    title: "End of Life Waste Management",
+    baseline: 185.93,
+    cap: 75,
+    categories: ["End of Life Waste Management"],
+    levers: [
+      { id: "eolRecyclability", label: "Improved recyclability", max: 35 },
+      { id: "eolLowerImpactDesign", label: "Compostable or lower impact material design", max: 40 },
+      { id: "eolDisposalGuidance", label: "Consumer disposal guidance", max: 20 },
+      { id: "eolTreatmentImprovement", label: "Waste treatment improvement", max: 35 },
+      { id: "eolPackagingImprovement", label: "Packaging end of life improvement", max: 25 }
+    ]
+  },
+  {
+    key: "operations",
+    title: "Scope 1 and Scope 2 Operational Emissions",
+    baseline: 5.33,
+    cap: 90,
+    categories: [],
+    levers: [
+      { id: "opsHeatingEfficiency", label: "Heating efficiency", max: 40 },
+      { id: "opsReducedGas", label: "Reduced gas heating use", max: 50 },
+      { id: "opsOfficeEfficiency", label: "Office energy efficiency", max: 35 },
+      { id: "opsElectricityDemand", label: "Reduced electricity demand", max: 30 },
+      { id: "opsSharedOffice", label: "Shared office or lower operational footprint", max: 60 }
+    ]
+  }
 ];
 
+const chartPalette = ["#12304d", "#2563eb", "#14b8a6", "#22c55e", "#7c3aed", "#f59e0b", "#0f766e", "#38bdf8", "#84cc16", "#f97316", "#64748b", "#06b6d4", "#a855f7"];
 const charts = {};
 
 function formatNumber(value, decimals = 2) {
@@ -56,25 +140,33 @@ function formatNumber(value, decimals = 2) {
   });
 }
 
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
+
 function calculateTotals() {
-  const latestScope12Year = Math.max(...Object.keys(data.scope12Totals).map(Number));
-  const scope12Latest = data.scope12Totals[latestScope12Year];
   const currentScope12 = data.scope12Totals[CURRENT_YEAR];
   const scope3Latest = data.scope3Totals[CURRENT_YEAR];
-  const total2024 = currentScope12 + scope3Latest;
   const categories2024 = Object.entries(data.scope3Categories)
     .map(([category, values]) => ({ category, value: values[CURRENT_YEAR] }))
     .sort((a, b) => b.value - a.value);
 
   return {
-    latestScope12Year,
-    scope12Latest,
     currentScope12,
+    scope12Latest: currentScope12,
     scope3Latest,
-    total2024,
+    total2024: currentScope12 + scope3Latest,
     categories2024,
     largestScope3Category: categories2024[0]
   };
+}
+
+function calculateScopeShares() {
+  const total = data.scope3Totals[CURRENT_YEAR];
+  return Object.entries(data.scope3Categories)
+    .map(([category, values]) => ({ category, value: values[CURRENT_YEAR], share: (values[CURRENT_YEAR] / total) * 100 }))
+    .sort((a, b) => b.value - a.value);
 }
 
 function calculateProductionIntensity() {
@@ -82,12 +174,7 @@ function calculateProductionIntensity() {
   const rows = productionLinkedCategories.map((category) => {
     const emissions = data.scope3Categories[category][CURRENT_YEAR];
     const tonnesPerBox = emissions / productionVolume;
-    return {
-      category,
-      emissions,
-      tonnesPerBox,
-      kgPerBox: tonnesPerBox * 1000
-    };
+    return { category, emissions, tonnesPerBox, kgPerBox: tonnesPerBox * 1000 };
   });
 
   return {
@@ -97,77 +184,101 @@ function calculateProductionIntensity() {
   };
 }
 
-function getSliderValues() {
-  return {
-    productionGrowth: Number(document.getElementById("productionGrowth").value),
-    manufacturingReduction: Number(document.getElementById("manufacturingReduction").value),
-    rawMaterialsReduction: Number(document.getElementById("rawMaterialsReduction").value),
-    packagingReduction: Number(document.getElementById("packagingReduction").value),
-    logisticsReduction: Number(document.getElementById("logisticsReduction").value),
-    endOfLifeReduction: Number(document.getElementById("endOfLifeReduction").value),
-    operationalReduction: Number(document.getElementById("operationalReduction").value)
-  };
+function calculateCombinedReduction(values, cap) {
+  const remainingFactor = values.reduce((factor, value) => factor * (1 - value / 100), 1);
+  return Math.min((1 - remainingFactor) * 100, cap);
 }
 
-function categoryReductionFor(category, values) {
-  if (category === "Manufacturing and Processing") return values.manufacturingReduction;
-  if (category === "Raw Materials Procurement") return values.rawMaterialsReduction;
-  if (category === "Packaging") return values.packagingReduction;
-  if (category === "End of Life Waste Management") return values.endOfLifeReduction;
-  if (logisticsCategories.includes(category)) return values.logisticsReduction;
-  return 0;
+function getLeverValue(leverId) {
+  const input = document.getElementById(leverId);
+  return input ? Number(input.value) : 0;
+}
+
+function getReductionSummary() {
+  return reductionGroups.reduce((summary, group) => {
+    const values = group.levers.map((lever) => getLeverValue(lever.id));
+    const combinedReduction = calculateCombinedReduction(values, group.cap);
+    const bestLever = group.levers.reduce((best, lever) => {
+      const value = getLeverValue(lever.id);
+      return value > best.value ? { label: lever.label, value } : best;
+    }, { label: "No lever selected", value: 0 });
+
+    summary[group.key] = { values, combinedReduction, bestLever };
+    return summary;
+  }, {});
+}
+
+function reductionForCategory(category, reductions) {
+  const group = reductionGroups.find((item) => item.categories.includes(category));
+  return group ? reductions[group.key].combinedReduction : 0;
 }
 
 function runScenario() {
-  const values = getSliderValues();
-  const productionGrowthFactor = 1 + values.productionGrowth / 100;
+  const productionGrowth = Number(document.getElementById("productionGrowth")?.value ?? 10);
+  const productionGrowthFactor = 1 + productionGrowth / 100;
+  const reductions = getReductionSummary();
   const projectedCategories = {};
   const growthOnlyCategories = {};
 
   Object.entries(data.scope3Categories).forEach(([category, yearlyValues]) => {
     const baseEmissions = yearlyValues[CURRENT_YEAR];
-    const reductionFactor = 1 - categoryReductionFor(category, values) / 100;
-    const growsWithProduction = productionLinkedCategories.includes(category) || logisticsCategories.includes(category);
-
-    // Production-linked and logistics categories scale with growth; other categories remain at 2024 levels.
+    const growsWithProduction = productionLinkedCategories.includes(category);
     const growthAdjusted = growsWithProduction ? baseEmissions * productionGrowthFactor : baseEmissions;
+    const reduction = reductionForCategory(category, reductions);
+
     growthOnlyCategories[category] = growthAdjusted;
-    projectedCategories[category] = growthAdjusted * reductionFactor;
+    projectedCategories[category] = growthAdjusted * (1 - reduction / 100);
   });
 
   const projectedScope3 = Object.values(projectedCategories).reduce((sum, value) => sum + value, 0);
   const growthOnlyScope3 = Object.values(growthOnlyCategories).reduce((sum, value) => sum + value, 0);
-
-  // Scope 1 + 2 simulation applies only the operational reduction lever to the 2024 actual value.
-  const projectedScope12 = data.scope12Totals[CURRENT_YEAR] * (1 - values.operationalReduction / 100);
+  const operationalReduction = reductions.operations.combinedReduction;
+  const projectedScope12 = data.scope12Totals[CURRENT_YEAR] * (1 - operationalReduction / 100);
+  const growthOnlyTotal = data.scope12Totals[CURRENT_YEAR] + growthOnlyScope3;
   const projectedTotal = projectedScope12 + projectedScope3;
   const total2024 = data.scope12Totals[CURRENT_YEAR] + data.scope3Totals[CURRENT_YEAR];
+  const emissionsSaved = Math.max(growthOnlyTotal - projectedTotal, 0);
   const changeVs2024 = projectedTotal - total2024;
 
   const scope12Gap = Math.max(projectedScope12 - SCOPE12_2030_TARGET, 0);
   const scope12RequiredReduction = projectedScope12 > 0 ? (scope12Gap / projectedScope12) * 100 : 0;
   const scope3Gap = Math.max(projectedScope3 - SCOPE3_2030_PLANNING_TARGET, 0);
   const scope3RequiredReduction = projectedScope3 > 0 ? (scope3Gap / projectedScope3) * 100 : 0;
-
   const projectedCategoryList = Object.entries(projectedCategories)
     .map(([category, value]) => ({ category, value }))
     .sort((a, b) => b.value - a.value);
 
+  const packagingBeforeReduction = growthOnlyCategories.Packaging;
+  const packagingAfterReduction = projectedCategories.Packaging;
+  const projectedProduction = data.productionVolumes[CURRENT_YEAR] * productionGrowthFactor;
+
   return {
-    values,
-    projectedProduction: data.productionVolumes[CURRENT_YEAR] * productionGrowthFactor,
+    productionGrowth,
+    productionGrowthFactor,
+    reductions,
+    projectedProduction,
     projectedCategories,
+    growthOnlyCategories,
     projectedCategoryList,
     projectedScope3,
     growthOnlyScope3,
     projectedScope12,
     projectedTotal,
+    emissionsSaved,
     changeVs2024,
     scope12Gap,
     scope12RequiredReduction,
     scope3Gap,
     scope3RequiredReduction,
-    highestProjectedCategory: projectedCategoryList[0]
+    highestProjectedCategory: projectedCategoryList[0],
+    packaging: {
+      beforeReduction: packagingBeforeReduction,
+      afterReduction: packagingAfterReduction,
+      saved: packagingBeforeReduction - packagingAfterReduction,
+      kgPerBoxBefore: (packagingBeforeReduction / projectedProduction) * 1000,
+      kgPerBoxAfter: (packagingAfterReduction / projectedProduction) * 1000,
+      bestLever: reductions.packaging.bestLever
+    }
   };
 }
 
@@ -179,8 +290,10 @@ function destroyChart(name) {
 }
 
 function createChart(name, canvasId, config) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === "undefined") return;
   destroyChart(name);
-  charts[name] = new Chart(document.getElementById(canvasId), config);
+  charts[name] = new Chart(canvas, config);
 }
 
 function baseChartOptions(extraOptions = {}) {
@@ -188,79 +301,115 @@ function baseChartOptions(extraOptions = {}) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: "#14213d", boxWidth: 14, font: { weight: "700" } } },
+      legend: { labels: { color: "#334155", boxWidth: 14, font: { weight: "700" } } },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.dataset.label || context.label}: ${formatNumber(context.parsed.y ?? context.parsed, 2)} tCO2e`
+          label: (context) => `${context.dataset.label || context.label}: ${formatNumber(context.parsed.y ?? context.parsed.x ?? context.parsed, 2)} tCO2e`
         }
       }
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: "#5d6b82" } },
-      y: { beginAtZero: true, grid: { color: "#e6edf3" }, ticks: { color: "#5d6b82" } }
+      x: { grid: { display: false }, ticks: { color: "#64748b" } },
+      y: { beginAtZero: true, grid: { color: "#e2e8f0" }, ticks: { color: "#64748b" } }
     },
     ...extraOptions
   };
 }
 
-function updateKPIs() {
+function updateKPIs(scenario = runScenario()) {
   const totals = calculateTotals();
-  const currentPathway = data.scope12Pathway[CURRENT_YEAR];
-  const delta = totals.currentScope12 - currentPathway;
+  const delta = totals.currentScope12 - data.scope12Pathway[CURRENT_YEAR];
   const ahead = delta <= 0;
 
-  document.getElementById("kpiScope12").textContent = `${formatNumber(totals.scope12Latest)} tCO2e`;
-  document.getElementById("kpiScope3").textContent = `${formatNumber(totals.scope3Latest)} tCO2e`;
-  document.getElementById("kpiLargestCategory").textContent = totals.largestScope3Category.category;
-  document.getElementById("kpiLargestCategoryValue").textContent = `${formatNumber(totals.largestScope3Category.value)} tCO2e in 2024`;
-  document.getElementById("kpiTotal2024").textContent = `${formatNumber(totals.total2024)} tCO2e`;
-  document.getElementById("kpiTarget2030").textContent = `${formatNumber(SCOPE12_2030_TARGET)} tCO2e`;
-  document.getElementById("kpiPathwayStatus").textContent = ahead ? "Ahead of pathway" : "Behind pathway";
-  document.getElementById("kpiPathwayDelta").textContent = `${formatNumber(Math.abs(delta))} tCO2e ${ahead ? "below" : "above"} the 2024 pathway`;
+  setText("kpiScope12", `${formatNumber(totals.scope12Latest)} tCO2e`);
+  setText("kpiScope3", `${formatNumber(totals.scope3Latest)} tCO2e`);
+  setText("kpiLargestCategory", totals.largestScope3Category.category);
+  setText("kpiLargestCategoryValue", `${formatNumber(totals.largestScope3Category.value)} tCO2e in 2024`);
+  setText("kpiTotal2024", `${formatNumber(totals.total2024)} tCO2e`);
+  setText("kpiTarget2030", `${formatNumber(SCOPE12_2030_TARGET)} tCO2e`);
+  setText("kpiPathwayStatus", ahead ? "Ahead of pathway" : "Behind pathway");
+  setText("kpiPathwayDelta", `${formatNumber(Math.abs(delta))} tCO2e ${ahead ? "below" : "above"} the 2024 pathway`);
+  setText("overviewProjectedScope3", `${formatNumber(scenario.projectedScope3)} tCO2e`);
+  setText("overviewProjectedTotal", `${formatNumber(scenario.projectedTotal)} tCO2e`);
+  setText("overviewEmissionsSaved", `${formatNumber(scenario.emissionsSaved)} tCO2e`);
+  setText("overviewLargestRemaining", scenario.highestProjectedCategory.category);
+  setText("sideLargestCategory", scenario.highestProjectedCategory.category);
+  setText("sideLargestCategoryValue", `${formatNumber(scenario.highestProjectedCategory.value)} tCO2e remaining`);
+  setText("sideScenarioHealth", scenario.scope3Gap > 0 ? "Further action needed" : "On planning track");
+  setText("sideScenarioHealthText", scenario.scope3Gap > 0 ? `${formatNumber(scenario.scope3Gap)} tCO2e Scope 3 gap remains.` : "Scope 3 is within the planning benchmark.");
 
   const pill = document.getElementById("pathwayPill");
-  pill.textContent = ahead ? "Ahead of 2024 pathway" : "Behind 2024 pathway";
-  pill.classList.toggle("is-behind", !ahead);
+  if (pill) {
+    pill.textContent = ahead ? "Ahead of 2024 pathway" : "Behind 2024 pathway";
+    pill.classList.toggle("is-positive", ahead);
+    pill.classList.toggle("is-warning", !ahead);
+  }
 }
 
-function updateIntensityTable() {
+function updateTotalsTable() {
+  const years = [2019, 2020, 2021, 2022, 2023, 2024];
+  const rows = years.map((year) => {
+    const scope12 = data.scope12Totals[year];
+    const scope3 = data.scope3Totals[year];
+    return `<tr><td>${year}</td><td>${formatNumber(scope12)}</td><td>${formatNumber(scope3)}</td><td>${formatNumber(scope12 + scope3)}</td></tr>`;
+  });
+  const table = document.getElementById("totalsTable");
+  if (table) table.innerHTML = rows.join("");
+}
+
+function updateIntensityTable(scenario = runScenario()) {
   const intensity = calculateProductionIntensity();
-  document.getElementById("productionVolume2024").textContent = `${formatNumber(intensity.productionVolume, 0)} boxes`;
-  document.getElementById("linkedEmissions2024").textContent = `${formatNumber(intensity.linkedEmissions)} tCO2e`;
-  document.getElementById("intensityTable").innerHTML = intensity.rows.map((row) => `
-    <tr>
-      <td>${row.category}</td>
-      <td>${row.tonnesPerBox.toExponential(4)}</td>
-      <td>${formatNumber(row.kgPerBox, 4)}</td>
-    </tr>
-  `).join("");
+  setText("productionVolume2024", `${formatNumber(intensity.productionVolume, 0)} boxes`);
+  setText("linkedEmissions2024", `${formatNumber(intensity.linkedEmissions)} tCO2e`);
+  setText("intensityProjectedProduction", `${formatNumber(scenario.projectedProduction, 0)} boxes`);
+  setText("intensityPackagingAfter", `${formatNumber(scenario.packaging.kgPerBoxAfter, 4)} kgCO2e`);
+
+  const table = document.getElementById("intensityTable");
+  if (table) {
+    table.innerHTML = intensity.rows.map((row) => `
+      <tr>
+        <td>${row.category}</td>
+        <td>${row.tonnesPerBox.toExponential(4)}</td>
+        <td>${formatNumber(row.kgPerBox, 4)}</td>
+      </tr>
+    `).join("");
+  }
 }
 
 function updateScenarioOutputs(scenario) {
-  document.getElementById("projectedProduction").textContent = `${formatNumber(scenario.projectedProduction, 0)} boxes`;
-  document.getElementById("projectedScope3").textContent = `${formatNumber(scenario.projectedScope3)} tCO2e`;
-  document.getElementById("projectedScope12").textContent = `${formatNumber(scenario.projectedScope12)} tCO2e`;
-  document.getElementById("projectedTotal").textContent = `${formatNumber(scenario.projectedTotal)} tCO2e`;
-  document.getElementById("changeVs2024").textContent = `${scenario.changeVs2024 >= 0 ? "+" : ""}${formatNumber(scenario.changeVs2024)} tCO2e`;
-  document.getElementById("requiredReduction").textContent = `S1+2: ${formatNumber(scenario.scope12RequiredReduction)}% | S3: ${formatNumber(scenario.scope3RequiredReduction)}%`;
-  document.getElementById("highestProjectedCategory").textContent = `${scenario.highestProjectedCategory.category} (${formatNumber(scenario.highestProjectedCategory.value)} tCO2e)`;
-  const nearTermGap = Math.max(scenario.projectedScope12 - data.scope12Pathway[NEXT_PATHWAY_YEAR], 0);
-  document.getElementById("gapAnalysis").textContent = `Projected Scope 1 + 2 is ${formatNumber(nearTermGap)} tCO2e above the ${NEXT_PATHWAY_YEAR} near-term pathway value of ${formatNumber(data.scope12Pathway[NEXT_PATHWAY_YEAR])} tCO2e and ${formatNumber(scenario.scope12Gap)} tCO2e above the 2030 target of ${formatNumber(SCOPE12_2030_TARGET)} tCO2e, requiring ${formatNumber(scenario.scope12RequiredReduction)}% further reduction by 2030. Projected Scope 3 is ${formatNumber(scenario.scope3Gap)} tCO2e above the planning benchmark of ${formatNumber(SCOPE3_2030_PLANNING_TARGET)} tCO2e, requiring ${formatNumber(scenario.scope3RequiredReduction)}% further reduction.`;
+  const changePrefix = scenario.changeVs2024 >= 0 ? "+" : "";
+  setText("projectedProduction", `${formatNumber(scenario.projectedProduction, 0)} boxes`);
+  setText("projectedScope3Before", `${formatNumber(scenario.growthOnlyScope3)} tCO2e`);
+  setText("projectedScope3", `${formatNumber(scenario.projectedScope3)} tCO2e`);
+  setText("projectedScope12", `${formatNumber(scenario.projectedScope12)} tCO2e`);
+  setText("projectedTotal", `${formatNumber(scenario.projectedTotal)} tCO2e`);
+  setText("changeVs2024", `${changePrefix}${formatNumber(scenario.changeVs2024)} tCO2e`);
+  setText("emissionsSaved", `${formatNumber(scenario.emissionsSaved)} tCO2e`);
+  setText("highestProjectedCategory", `${scenario.highestProjectedCategory.category} (${formatNumber(scenario.highestProjectedCategory.value)} tCO2e)`);
+  setText("scope12Gap", `${formatNumber(scenario.scope12Gap)} tCO2e | ${formatNumber(scenario.scope12RequiredReduction)}% required`);
+  setText("scope3Gap", `${formatNumber(scenario.scope3Gap)} tCO2e | ${formatNumber(scenario.scope3RequiredReduction)}% required`);
+  setText("scope3GapDetail", `${formatNumber(scenario.scope3Gap)} tCO2e above 505.45 tCO2e (${formatNumber(scenario.scope3RequiredReduction)}% further reduction)`);
+  setText("scope12GapDetail", `${formatNumber(scenario.scope12Gap)} tCO2e above 4.51 tCO2e (${formatNumber(scenario.scope12RequiredReduction)}% further reduction)`);
+  setText("packagingProjected", `${formatNumber(scenario.packaging.afterReduction)} tCO2e`);
+  setText("packagingSaved", `${formatNumber(scenario.packaging.saved)} tCO2e`);
+  setText("packagingKgBefore", `${formatNumber(scenario.packaging.kgPerBoxBefore, 4)} kgCO2e`);
+  setText("packagingKgAfter", `${formatNumber(scenario.packaging.kgPerBoxAfter, 4)} kgCO2e`);
+  setText("packagingBestLever", scenario.packaging.bestLever.value > 0 ? `${scenario.packaging.bestLever.label} (${scenario.packaging.bestLever.value}%)` : "No lever selected");
+  setText("gapAnalysis", `Projected Scope 1 and Scope 2 is ${formatNumber(scenario.scope12Gap)} tCO2e above the 2030 target of ${formatNumber(SCOPE12_2030_TARGET)} tCO2e, requiring ${formatNumber(scenario.scope12RequiredReduction)}% further reduction. Projected Scope 3 is ${formatNumber(scenario.scope3Gap)} tCO2e above the planning benchmark of ${formatNumber(SCOPE3_2030_PLANNING_TARGET)} tCO2e, requiring ${formatNumber(scenario.scope3RequiredReduction)}% further reduction. Scope 3 pathway is shown for planning and scenario analysis only. Formal SBTi requirements may depend on final target boundary, coverage and approved target wording.`);
 }
 
 function updateCharts(scenario = runScenario()) {
   const years = [2019, 2020, 2021, 2022, 2023, 2024];
-  const totals = calculateTotals();
-  const sortedCategories = totals.categories2024;
+  const sortedCategories = calculateScopeShares();
 
   createChart("historical", "historicalChart", {
     type: "line",
     data: {
       labels: years,
       datasets: [
-        { label: "Scope 1", data: years.map((year) => data.scope1[year]), borderColor: "#123c69", backgroundColor: "rgba(18, 60, 105, 0.12)", tension: 0.35, pointRadius: 4 },
-        { label: "Scope 2", data: years.map((year) => data.scope2[year]), borderColor: "#1f6f9f", backgroundColor: "rgba(31, 111, 159, 0.12)", tension: 0.35, pointRadius: 4 },
-        { label: "Scope 3", data: years.map((year) => data.scope3Totals[year]), borderColor: "#1b8a5a", backgroundColor: "rgba(27, 138, 90, 0.12)", tension: 0.35, pointRadius: 4 }
+        { label: "Scope 1", data: years.map((year) => data.scope1[year]), borderColor: "#12304d", backgroundColor: "rgba(18, 48, 77, 0.12)", tension: 0.35, pointRadius: 4 },
+        { label: "Scope 2", data: years.map((year) => data.scope2[year]), borderColor: "#2563eb", backgroundColor: "rgba(37, 99, 235, 0.12)", tension: 0.35, pointRadius: 4 },
+        { label: "Scope 3", data: years.map((year) => data.scope3Totals[year]), borderColor: "#14b8a6", backgroundColor: "rgba(20, 184, 166, 0.12)", tension: 0.35, pointRadius: 4 }
       ]
     },
     options: baseChartOptions()
@@ -273,16 +422,13 @@ function updateCharts(scenario = runScenario()) {
       datasets: [{
         label: "2024 Scope 3 emissions",
         data: sortedCategories.map((item) => item.value),
-        backgroundColor: sortedCategories.map((_, index) => index < 3 ? chartPalette[index] : "#9fb2c2"),
+        backgroundColor: sortedCategories.map((_, index) => index < 3 ? chartPalette[index] : "#94a3b8"),
         borderRadius: 12
       }]
     },
     options: baseChartOptions({
       indexAxis: "y",
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (context) => `${formatNumber(context.parsed.x)} tCO2e` } }
-      }
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${formatNumber(context.parsed.x)} tCO2e` } } }
     })
   });
 
@@ -297,7 +443,7 @@ function updateCharts(scenario = runScenario()) {
       maintainAspectRatio: false,
       cutout: "62%",
       plugins: {
-        legend: { position: "bottom", labels: { color: "#14213d", boxWidth: 12, font: { size: 11, weight: "700" } } },
+        legend: { position: "bottom", labels: { color: "#334155", boxWidth: 12, font: { size: 11, weight: "700" } } },
         tooltip: { callbacks: { label: (context) => `${context.label}: ${formatNumber(context.parsed)} tCO2e` } }
       }
     }
@@ -309,8 +455,8 @@ function updateCharts(scenario = runScenario()) {
     data: {
       labels: pathwayYears,
       datasets: [
-        { label: "Actual Scope 1 + 2", data: pathwayYears.map((year) => data.scope12Totals[year] ?? null), borderColor: "#123c69", backgroundColor: "rgba(18, 60, 105, 0.12)", tension: 0.25, spanGaps: false, pointRadius: 5 },
-        { label: "SBTi style pathway", data: pathwayYears.map((year) => data.scope12Pathway[year]), borderColor: "#1b8a5a", backgroundColor: "rgba(27, 138, 90, 0.10)", borderDash: [8, 6], tension: 0.25, pointRadius: 4 }
+        { label: "Actual Scope 1 + 2", data: pathwayYears.map((year) => data.scope12Totals[year] ?? null), borderColor: "#12304d", backgroundColor: "rgba(18, 48, 77, 0.12)", tension: 0.25, spanGaps: false, pointRadius: 5 },
+        { label: "SBTi style pathway", data: pathwayYears.map((year) => data.scope12Pathway[year]), borderColor: "#22c55e", backgroundColor: "rgba(34, 197, 94, 0.10)", borderDash: [8, 6], tension: 0.25, pointRadius: 4 }
       ]
     },
     options: baseChartOptions()
@@ -319,11 +465,25 @@ function updateCharts(scenario = runScenario()) {
   createChart("scenario", "scenarioChart", {
     type: "bar",
     data: {
-      labels: ["2024 actual", "Growth only", "Selected reductions", "2030 planning target"],
+      labels: ["2024 actual Scope 3", "Growth + no reductions", "After selected levers", "2030 planning benchmark"],
       datasets: [{
         label: "Scope 3 emissions",
         data: [data.scope3Totals[CURRENT_YEAR], scenario.growthOnlyScope3, scenario.projectedScope3, SCOPE3_2030_PLANNING_TARGET],
-        backgroundColor: ["#123c69", "#c77d00", "#1b8a5a", "#1f6f9f"],
+        backgroundColor: ["#12304d", "#f59e0b", "#14b8a6", "#22c55e"],
+        borderRadius: 12
+      }]
+    },
+    options: baseChartOptions({ plugins: { legend: { display: false } } })
+  });
+
+  createChart("scope12Scenario", "scope12ScenarioChart", {
+    type: "bar",
+    data: {
+      labels: ["2024 actual", "Projected after operational reductions", "2030 SBTi pathway target"],
+      datasets: [{
+        label: "Scope 1 + 2 emissions",
+        data: [data.scope12Totals[CURRENT_YEAR], scenario.projectedScope12, SCOPE12_2030_TARGET],
+        backgroundColor: ["#12304d", "#2563eb", "#22c55e"],
         borderRadius: 12
       }]
     },
@@ -331,60 +491,117 @@ function updateCharts(scenario = runScenario()) {
   });
 }
 
-function generateRecommendations(scenario) {
-  const category = scenario.highestProjectedCategory.category;
-  const logisticsTotal = logisticsCategories.reduce((sum, item) => sum + scenario.projectedCategories[item], 0);
-  const focusItems = [];
-
-  if (category === "Manufacturing and Processing") {
-    focusItems.push(["Manufacturing hotspot", "Prioritise supplier manufacturing efficiency, renewable process energy and lower energy intensity production routes."]);
-  }
-  if (category === "Raw Materials Procurement") {
-    focusItems.push(["Raw materials hotspot", "Accelerate lower impact materials, supplier engagement and product specification changes that reduce embedded carbon."]);
-  }
-  if (category === "Packaging" || scenario.projectedCategories.Packaging > scenario.projectedScope3 * 0.12) {
-    focusItems.push(["Packaging opportunity", "Advance packaging weight reduction, recycled content, fibre optimisation and design optimisation across the portfolio."]);
-  }
-  if (logisticsTotal > scenario.projectedScope3 * 0.08 || logisticsCategories.includes(category)) {
-    focusItems.push(["Logistics opportunity", "Use route optimisation, lower emission freight choices, modal shift and load efficiency to reduce distribution emissions."]);
-  }
-  if (category === "End of Life Waste Management" || scenario.projectedCategories["End of Life Waste Management"] > scenario.projectedScope3 * 0.10) {
-    focusItems.push(["End-of-life opportunity", "Improve recyclable design, compostability evidence, consumer disposal guidance and waste treatment outcomes."]);
-  }
-  if (!focusItems.length) {
-    focusItems.push(["Balanced reduction plan", "Maintain a portfolio-wide reduction programme because no single non-logistics category dominates the simulated footprint."]);
-  }
-
-  document.getElementById("recommendations").innerHTML = focusItems.map(([title, text]) => `
-    <div class="recommendation-item">
-      <strong>${title}</strong>
-      <span>${text}</span>
-    </div>
-  `).join("");
-}
-
-function updateSliderLabels() {
-  Object.entries(getSliderValues()).forEach(([key, value]) => {
-    const element = document.getElementById(`${key}Value`);
-    if (element) element.textContent = `${value}%`;
+function updateReductionCards(scenario = runScenario()) {
+  reductionGroups.forEach((group) => {
+    setText(`${group.key}Combined`, `${formatNumber(scenario.reductions[group.key].combinedReduction, 1)}%`);
+    group.levers.forEach((lever) => setText(`${lever.id}Value`, `${getLeverValue(lever.id)}%`));
   });
 }
 
+function generateRecommendations(scenario) {
+  const category = scenario.highestProjectedCategory.category;
+  const logisticsTotal = logisticsCategories.reduce((sum, item) => sum + scenario.projectedCategories[item], 0);
+  const growthLogistics = logisticsCategories.reduce((sum, item) => sum + scenario.growthOnlyCategories[item], 0);
+  const baselineLogistics = logisticsCategories.reduce((sum, item) => sum + data.scope3Categories[item][CURRENT_YEAR], 0);
+  const focusItems = [];
+
+  if (category === "Manufacturing and Processing") {
+    focusItems.push(["Manufacturing remains the largest contributor", "Prioritise supplier energy efficiency, process optimisation and lower impact production technology."]);
+  }
+  if (category === "Raw Materials Procurement" || scenario.projectedCategories["Raw Materials Procurement"] > scenario.projectedScope3 * 0.20) {
+    focusItems.push(["Raw materials procurement remains a major hotspot", "Increase supplier engagement, lower impact material substitution and certified or recycled inputs."]);
+  }
+  if (category === "Packaging" || scenario.projectedCategories.Packaging > scenario.projectedScope3 * 0.12) {
+    focusItems.push(["Packaging remains a material hotspot", "Increase cardboard weight reduction, recycled content and packaging size optimisation."]);
+  }
+  if (growthLogistics > baselineLogistics * 1.08 || logisticsTotal > scenario.projectedScope3 * 0.08) {
+    focusItems.push(["Production growth is increasing logistics emissions", "Consider route optimisation, load consolidation and lower emission freight partners."]);
+  }
+  if (scenario.scope3Gap > 0) {
+    focusItems.push(["Projected Scope 3 remains above the 2030 planning benchmark", "Additional reductions are required across manufacturing, raw materials and packaging."]);
+  }
+  if (scenario.scope12Gap === 0) {
+    focusItems.push(["Scope 1 and Scope 2 remain ahead of the pathway", "Continue annual monitoring to confirm the reduction is structural and not temporary."]);
+  } else {
+    focusItems.push(["Scope 1 and Scope 2 require further operational reductions", "Prioritise heating efficiency, reduced gas heating use and shared-office footprint optimisation."]);
+  }
+
+  const recommendations = document.getElementById("recommendations");
+  if (recommendations) {
+    recommendations.innerHTML = focusItems.map(([title, text]) => `
+      <div class="recommendation-item">
+        <strong>${title}</strong>
+        <span>${text}</span>
+      </div>
+    `).join("");
+  }
+}
+
+function buildReductionCards() {
+  const container = document.getElementById("reductionCards");
+  if (!container) return;
+
+  container.innerHTML = reductionGroups.map((group, index) => `
+    <details class="reduction-card" ${index < 3 ? "open" : ""}>
+      <summary class="lever-top">
+        <div>
+          <span>${group.title}</span>
+          <h3>Baseline ${CURRENT_YEAR}: ${formatNumber(group.baseline)} tCO2e</h3>
+          <p>Multiplicative reductions capped at ${group.cap}%.</p>
+        </div>
+        <strong id="${group.key}Combined" class="combined-reduction">0.0%</strong>
+      </summary>
+      <div class="lever-body">
+        ${group.levers.map((lever) => `
+          <label class="lever-slider" for="${lever.id}">
+            <span>${lever.label}</span>
+            <strong id="${lever.id}Value" class="lever-value">0%</strong>
+            <input id="${lever.id}" type="range" min="0" max="${lever.max}" value="0" />
+          </label>
+        `).join("")}
+      </div>
+    </details>
+  `).join("");
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll(".page-section").forEach((section) => section.classList.toggle("is-active", section.id === pageId));
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("is-active", item.dataset.page === pageId));
+
+  const activeSection = document.getElementById(pageId);
+  const title = activeSection?.dataset.title ?? "Overview";
+  setText("activePageName", title);
+  document.body.classList.remove("nav-open");
+}
+
 function refreshDashboard() {
-  updateSliderLabels();
   const scenario = runScenario();
-  updateKPIs();
+  setText("productionGrowthValue", `${scenario.productionGrowth}%`);
+  updateKPIs(scenario);
+  updateIntensityTable(scenario);
   updateScenarioOutputs(scenario);
+  updateReductionCards(scenario);
   updateCharts(scenario);
   generateRecommendations(scenario);
 }
 
-function initDashboard() {
-  updateIntensityTable();
+function initialiseDashboard() {
+  buildReductionCards();
+  updateTotalsTable();
+
   document.querySelectorAll("input[type='range']").forEach((slider) => {
     slider.addEventListener("input", refreshDashboard);
   });
+
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => switchPage(button.dataset.page));
+  });
+
+  document.getElementById("menuToggle")?.addEventListener("click", () => {
+    document.body.classList.toggle("nav-open");
+  });
+
   refreshDashboard();
 }
 
-document.addEventListener("DOMContentLoaded", initDashboard);
+document.addEventListener("DOMContentLoaded", initialiseDashboard);
