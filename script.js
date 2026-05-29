@@ -2,6 +2,7 @@ const CURRENT_YEAR = 2024;
 const SCOPE12_2030_TARGET = 4.51;
 const SCOPE3_2022_BASELINE = 871.47;
 const SCOPE3_2030_PLANNING_TARGET = 505.45;
+const SIMULATION_YEAR = CURRENT_YEAR + 1;
 
 const data = {
   scope1: { 2019: 1.09, 2020: 7.25, 2021: 4.79, 2022: 6.05, 2023: 4.84, 2024: 3.68 },
@@ -400,16 +401,20 @@ function updateScenarioOutputs(scenario) {
 
 function updateCharts(scenario = runScenario()) {
   const years = [2019, 2020, 2021, 2022, 2023, 2024];
-  const sortedCategories = calculateScopeShares();
+  const simulationYearLabel = `${SIMULATION_YEAR} scenario`;
+  const timelineLabels = [...years, simulationYearLabel];
+  const scenarioCategoryOrder = [...scenario.projectedCategoryList];
 
   createChart("historical", "historicalChart", {
     type: "line",
     data: {
-      labels: years,
+      labels: timelineLabels,
       datasets: [
-        { label: "Scope 1", data: years.map((year) => data.scope1[year]), borderColor: "#12304d", backgroundColor: "rgba(18, 48, 77, 0.12)", tension: 0.35, pointRadius: 4 },
-        { label: "Scope 2", data: years.map((year) => data.scope2[year]), borderColor: "#2563eb", backgroundColor: "rgba(37, 99, 235, 0.12)", tension: 0.35, pointRadius: 4 },
-        { label: "Scope 3", data: years.map((year) => data.scope3Totals[year]), borderColor: "#14b8a6", backgroundColor: "rgba(20, 184, 166, 0.12)", tension: 0.35, pointRadius: 4 }
+        { label: "Scope 1", data: [...years.map((year) => data.scope1[year]), null], borderColor: "#12304d", backgroundColor: "rgba(18, 48, 77, 0.12)", tension: 0.35, pointRadius: 4 },
+        { label: "Scope 2", data: [...years.map((year) => data.scope2[year]), null], borderColor: "#2563eb", backgroundColor: "rgba(37, 99, 235, 0.12)", tension: 0.35, pointRadius: 4 },
+        { label: "Scope 3 actual", data: [...years.map((year) => data.scope3Totals[year]), null], borderColor: "#14b8a6", backgroundColor: "rgba(20, 184, 166, 0.12)", tension: 0.35, pointRadius: 4 },
+        { label: "Scenario Scope 3 after levers", data: [...years.slice(0, -1).map(() => null), data.scope3Totals[CURRENT_YEAR], scenario.projectedScope3], borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.14)", borderDash: [8, 6], tension: 0.35, pointRadius: 5 },
+        { label: "Scenario Scope 1 + 2 after levers", data: [...years.slice(0, -1).map(() => null), data.scope12Totals[CURRENT_YEAR], scenario.projectedScope12], borderColor: "#7c3aed", backgroundColor: "rgba(124, 58, 237, 0.12)", borderDash: [5, 5], tension: 0.35, pointRadius: 5 }
       ]
     },
     options: baseChartOptions()
@@ -418,25 +423,39 @@ function updateCharts(scenario = runScenario()) {
   createChart("hotspot", "hotspotChart", {
     type: "bar",
     data: {
-      labels: sortedCategories.map((item) => item.category),
-      datasets: [{
-        label: "2024 Scope 3 emissions",
-        data: sortedCategories.map((item) => item.value),
-        backgroundColor: sortedCategories.map((_, index) => index < 3 ? chartPalette[index] : "#94a3b8"),
-        borderRadius: 12
-      }]
+      labels: scenarioCategoryOrder.map((item) => item.category),
+      datasets: [
+        {
+          label: "2024 actual",
+          data: scenarioCategoryOrder.map((item) => data.scope3Categories[item.category][CURRENT_YEAR]),
+          backgroundColor: "rgba(148, 163, 184, 0.72)",
+          borderRadius: 12
+        },
+        {
+          label: "Scenario after levers",
+          data: scenarioCategoryOrder.map((item) => item.value),
+          backgroundColor: scenarioCategoryOrder.map((_, index) => index < 3 ? chartPalette[index] : "#14b8a6"),
+          borderRadius: 12
+        }
+      ]
     },
     options: baseChartOptions({
       indexAxis: "y",
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${formatNumber(context.parsed.x)} tCO2e` } } }
+      plugins: { tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${formatNumber(context.parsed.x)} tCO2e` } } }
     })
   });
 
   createChart("composition", "compositionChart", {
     type: "doughnut",
     data: {
-      labels: sortedCategories.map((item) => item.category),
-      datasets: [{ data: sortedCategories.map((item) => item.value), backgroundColor: chartPalette, borderColor: "#ffffff", borderWidth: 3 }]
+      labels: scenarioCategoryOrder.map((item) => item.category),
+      datasets: [{
+        label: "Scenario Scope 3 composition",
+        data: scenarioCategoryOrder.map((item) => item.value),
+        backgroundColor: chartPalette,
+        borderColor: "#ffffff",
+        borderWidth: 3
+      }]
     },
     options: {
       responsive: true,
@@ -456,7 +475,8 @@ function updateCharts(scenario = runScenario()) {
       labels: pathwayYears,
       datasets: [
         { label: "Actual Scope 1 + 2", data: pathwayYears.map((year) => data.scope12Totals[year] ?? null), borderColor: "#12304d", backgroundColor: "rgba(18, 48, 77, 0.12)", tension: 0.25, spanGaps: false, pointRadius: 5 },
-        { label: "SBTi style pathway", data: pathwayYears.map((year) => data.scope12Pathway[year]), borderColor: "#22c55e", backgroundColor: "rgba(34, 197, 94, 0.10)", borderDash: [8, 6], tension: 0.25, pointRadius: 4 }
+        { label: "Scenario after operational levers", data: [null, null, data.scope12Totals[CURRENT_YEAR], scenario.projectedScope12, null, null, null, null, null], borderColor: "#7c3aed", backgroundColor: "rgba(124, 58, 237, 0.12)", borderDash: [5, 5], tension: 0.25, pointRadius: 5 },
+        { label: "SBTi style pathway", data: pathwayYears.map((year) => data.scope12Pathway[year] ?? null), borderColor: "#22c55e", backgroundColor: "rgba(34, 197, 94, 0.10)", borderDash: [8, 6], tension: 0.25, pointRadius: 4 }
       ]
     },
     options: baseChartOptions()
