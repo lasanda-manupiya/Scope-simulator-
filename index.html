@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SBTi Emissions Scenario Modelling Dashboard</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero__content">
+        <p class="eyebrow">Leading Sanitary Product Company</p>
+        <h1>SBTi Emissions Scenario Modelling Dashboard</h1>
+        <p class="hero__subtitle">Interactive emissions intelligence for a leading sanitary product company</p>
+      </div>
+      <div class="hero__badge" aria-label="Current simulation year">
+        <span>Current year</span>
+        <strong>2024</strong>
+      </div>
+    </header>
+
+    <main>
+      <section class="kpi-grid" aria-label="Executive emissions KPIs">
+        <article class="kpi-card">
+          <span class="kpi-card__label">Latest Scope 1 + 2 actual</span>
+          <strong id="kpiScope12">—</strong>
+          <small>Latest reported operational emissions</small>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-card__label">Latest Scope 3 actual</span>
+          <strong id="kpiScope3">—</strong>
+          <small>2024 value chain emissions</small>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-card__label">Largest Scope 3 category</span>
+          <strong id="kpiLargestCategory">—</strong>
+          <small id="kpiLargestCategoryValue">—</small>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-card__label">2024 total emissions</span>
+          <strong id="kpiTotal2024">—</strong>
+          <small>Scope 1 + 2 + 3</small>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-card__label">2030 Scope 1 + 2 target</span>
+          <strong id="kpiTarget2030">—</strong>
+          <small>42% reduction pathway</small>
+        </article>
+        <article class="kpi-card kpi-card--status">
+          <span class="kpi-card__label">Scope 1 + 2 pathway status</span>
+          <strong id="kpiPathwayStatus">—</strong>
+          <small id="kpiPathwayDelta">—</small>
+        </article>
+      </section>
+
+      <section class="dashboard-grid dashboard-grid--two">
+        <article class="panel panel--wide">
+          <div class="panel__header">
+            <div>
+              <h2>Historical emissions trends</h2>
+              <p>Scope 1, Scope 2 and Scope 3 emissions by reporting year.</p>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap--large"><canvas id="historicalChart"></canvas></div>
+          <p class="chart-note">Scope 3 expands materially from 2022 as value chain categories are included.</p>
+        </article>
+
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <h2>Scope 3 composition</h2>
+              <p>2024 category share of value chain emissions.</p>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="compositionChart"></canvas></div>
+          <p class="chart-note">Shares are calculated from the 2024 Scope 3 total of 1,428.93 tCO2e.</p>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Scope 3 category hotspots</h2>
+            <p>2024 categories sorted from highest to lowest emissions.</p>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap--large"><canvas id="hotspotChart"></canvas></div>
+        <p class="chart-note">Top contributors are visually emphasised to support rapid prioritisation.</p>
+      </section>
+
+      <section class="dashboard-grid dashboard-grid--two">
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <h2>SBTi style Scope 1 + 2 pathway</h2>
+              <p>Actual Scope 1 + 2 emissions compared with a 42% reduction pathway.</p>
+            </div>
+            <span id="pathwayPill" class="status-pill">—</span>
+          </div>
+          <div class="chart-wrap"><canvas id="pathwayChart"></canvas></div>
+          <p class="chart-note">The 2024 actual is compared with the 2024 pathway value, and simulations compare against the 2030 target.</p>
+        </article>
+
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <h2>Production intensity</h2>
+              <p>2024 production-linked Scope 3 intensity by category.</p>
+            </div>
+          </div>
+          <div class="intensity-summary">
+            <div>
+              <span>Production volume</span>
+              <strong id="productionVolume2024">—</strong>
+            </div>
+            <div>
+              <span>Linked emissions</span>
+              <strong id="linkedEmissions2024">—</strong>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>tCO2e / box</th>
+                  <th>kgCO2e / box</th>
+                </tr>
+              </thead>
+              <tbody id="intensityTable"></tbody>
+            </table>
+          </div>
+          <p class="chart-note">Production-linked categories include manufacturing, raw materials, packaging, shipment and distribution, and end-of-life waste management.</p>
+        </article>
+      </section>
+
+      <section class="panel scenario-panel">
+        <div class="panel__header panel__header--stacked">
+          <div>
+            <h2>Scenario simulation</h2>
+            <p>Adjust production growth and reduction levers to model future emissions performance.</p>
+          </div>
+        </div>
+
+        <div class="scenario-layout">
+          <div class="controls" aria-label="Scenario controls">
+            <div class="control-row">
+              <label for="productionGrowth">Production growth next year</label>
+              <span id="productionGrowthValue">10%</span>
+              <input id="productionGrowth" type="range" min="0" max="50" value="10" />
+            </div>
+            <div class="control-row">
+              <label for="manufacturingReduction">Manufacturing reduction</label>
+              <span id="manufacturingReductionValue">0%</span>
+              <input id="manufacturingReduction" type="range" min="0" max="50" value="0" />
+            </div>
+            <div class="control-row">
+              <label for="rawMaterialsReduction">Raw materials reduction</label>
+              <span id="rawMaterialsReductionValue">0%</span>
+              <input id="rawMaterialsReduction" type="range" min="0" max="50" value="0" />
+            </div>
+            <div class="control-row">
+              <label for="packagingReduction">Packaging reduction</label>
+              <span id="packagingReductionValue">0%</span>
+              <input id="packagingReduction" type="range" min="0" max="50" value="0" />
+            </div>
+            <div class="control-row">
+              <label for="logisticsReduction">Logistics reduction</label>
+              <span id="logisticsReductionValue">0%</span>
+              <input id="logisticsReduction" type="range" min="0" max="50" value="0" />
+            </div>
+            <div class="control-row">
+              <label for="endOfLifeReduction">End of life reduction</label>
+              <span id="endOfLifeReductionValue">0%</span>
+              <input id="endOfLifeReduction" type="range" min="0" max="50" value="0" />
+            </div>
+            <div class="control-row">
+              <label for="operationalReduction">Scope 1 + 2 operational reduction</label>
+              <span id="operationalReductionValue">0%</span>
+              <input id="operationalReduction" type="range" min="0" max="50" value="0" />
+            </div>
+          </div>
+
+          <div class="scenario-results">
+            <div class="result-card">
+              <span>Projected production volume</span>
+              <strong id="projectedProduction">—</strong>
+            </div>
+            <div class="result-card">
+              <span>Projected Scope 3 emissions</span>
+              <strong id="projectedScope3">—</strong>
+            </div>
+            <div class="result-card">
+              <span>Projected Scope 1 + 2 emissions</span>
+              <strong id="projectedScope12">—</strong>
+            </div>
+            <div class="result-card">
+              <span>Projected total emissions</span>
+              <strong id="projectedTotal">—</strong>
+            </div>
+            <div class="result-card">
+              <span>Change vs 2024</span>
+              <strong id="changeVs2024">—</strong>
+            </div>
+            <div class="result-card">
+              <span>Reduction required to target</span>
+              <strong id="requiredReduction">—</strong>
+            </div>
+            <div class="result-card result-card--wide">
+              <span>Highest contributing category after simulation</span>
+              <strong id="highestProjectedCategory">—</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-grid dashboard-grid--two">
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <h2>Scenario comparison</h2>
+              <p>Scope 3 actual, growth-only projection, selected reductions and planning target.</p>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="scenarioChart"></canvas></div>
+          <p class="chart-note">Scope 3 pathway shown for planning purposes. Formal SBTi target requirements may depend on final target boundary and coverage.</p>
+        </article>
+
+        <article class="panel recommendations-panel">
+          <div class="panel__header">
+            <div>
+              <h2>Dynamic recommendations</h2>
+              <p>Priority actions based on the simulated hotspot profile.</p>
+            </div>
+          </div>
+          <div id="recommendations" class="recommendations" aria-live="polite"></div>
+          <div class="gap-box">
+            <h3>Gap analysis</h3>
+            <p id="gapAnalysis">—</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
